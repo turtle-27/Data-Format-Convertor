@@ -16,6 +16,5 @@ fun convertDelimeters(infilename, delim1, outfilename, delim2) =
                 )
             end
         );
-        closeOut(outfile);
-        !n
+        closeOut(outfile)
     end
