@@ -4,5 +4,6 @@ fun makeList1() =
         val d = "\\d\n";
         val e = #"\\"
     in
-        print(str(e))
+        print(str(String.sub(c, 0)));
+        print(str(String.sub(c,1)))
     end;

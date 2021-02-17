@@ -16,10 +16,10 @@ fun convertDelimeters(infilename, delim1, outfilename, delim2) =
                         if(c = delim1) then output(outfile, str(delim2))
                         else if (c = delim2) then output(outfile, "\\"^str(delim2))
                         else if (c = #"\\") then
-                            (count := !count+1;
-                            c = String.sub(line, !count);
-                            if(c = delim1) then output(outfile, str(delim2))
-                            else if (c = delim2) then output(outfile, "\\"^str(delim2))
+                            (
+                            count := !count+1;
+                            if(String.sub(line, !count) = delim1) then output(outfile, str(delim1))
+                            else if (String.sub(line, !count) = delim2) then output(outfile, "\\"^str(delim2))
                             else output(outfile, substring(line, !count, 1))
                             )
                         else output(outfile, substring(line, !count, 1));
