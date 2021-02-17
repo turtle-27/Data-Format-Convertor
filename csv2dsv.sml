@@ -40,7 +40,6 @@ fun convertNewlines(infilename, newline1, outfilename, newline2) =
         val outfile = openOut(outfilename);
         val size1 = String.size(newline1)
     in 
-        print(Int.toString(size1));
         while (valOf(canInput(infile, 1)) = 1) do (
             let 
                 val line = valOf(inputLine(infile));
@@ -51,11 +50,9 @@ fun convertNewlines(infilename, newline1, outfilename, newline2) =
                         val c = substring(line, !count, size1)
                     in
                         if(c = newline1) then (
-                            print(c^"a");
                             output(outfile, newline2);
                             count := !count + size1)
                         else (
-                            print(c^"b");
                             output(outfile, substring(line, !count, 1));
                             count := !count + 1
                             )
