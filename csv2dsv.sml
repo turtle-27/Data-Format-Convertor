@@ -17,9 +17,12 @@ fun convertDelimeters(infilename, delim1, outfilename, delim2) =
                         else if (c = delim2) then output(outfile, "\\"^str(delim2))
                         else if (c = #"\\") then
                             (
-                            count := !count+1;
-                            if(String.sub(line, !count) = delim1) then output(outfile, str(delim1))
-                            else if (String.sub(line, !count) = delim2) then output(outfile, "\\"^str(delim2))
+                            if(String.sub(line, !count+1) = delim1) then 
+                            (output(outfile, str(delim1));
+                            count := !count+1)
+                            else if (String.sub(line, !count+1) = delim2) then (
+                                output(outfile, "\\\\"^str(delim2));
+                                count := !count + 1 )
                             else output(outfile, substring(line, !count, 1))
                             )
                         else output(outfile, substring(line, !count, 1));
