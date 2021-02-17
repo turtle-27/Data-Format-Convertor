@@ -33,3 +33,35 @@ fun convertDelimeters(infilename, delim1, outfilename, delim2) =
         );
         closeOut(outfile)
     end
+
+fun convertNewlines(infilename, newline1, outfilename, newline2) = 
+    let 
+        val infile = openIn(infilename);
+        val outfile = openOut(outfilename);
+        val size1 = String.size(newline1)
+    in 
+        print(Int.toString(size1));
+        while (valOf(canInput(infile, 1)) = 1) do (
+            let 
+                val line = valOf(inputLine(infile));
+                val count = ref 0
+            in
+                while(!count+size1 <= String.size(line)) do (
+                    let 
+                        val c = substring(line, !count, size1)
+                    in
+                        if(c = newline1) then (
+                            print(c^"a");
+                            output(outfile, newline2);
+                            count := !count + size1)
+                        else (
+                            print(c^"b");
+                            output(outfile, substring(line, !count, 1));
+                            count := !count + 1
+                            )
+                    end
+                )
+            end
+        );
+        closeOut(outfile)
+    end
