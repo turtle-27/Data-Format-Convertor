@@ -1,2 +1,0 @@
-Na\\,me| Entry,Num| Kerb\|er\\|os
-Nishant| 2019CS50586| cs5190586
