@@ -3,6 +3,7 @@ exception emptyInputFile;
 exception UnevenFields of string;
 fun rawconvertDelimeters(infilename, delim1, outfilename, delim2) = 
     let 
+        (*infile takes input file, outfile gives output file, ncol: no. of column in line 1, nline: current line number.*)
         val infile = openIn(infilename);
         val outfile = openOut(outfilename);
         val ncol = ref 0;
@@ -13,6 +14,7 @@ fun rawconvertDelimeters(infilename, delim1, outfilename, delim2) =
         else 
         while (valOf(canInput(infile, 1)) = 1) do (
             let 
+                (*line stores current line, check is the number of delimeters detected, count refer to index of current character of the line.*)
                 val line = valOf(inputLine(infile));
                 val count = ref 0;
                 val check = ref 0
@@ -60,6 +62,7 @@ fun rawconvertDelimeters(infilename, delim1, outfilename, delim2) =
 
 fun rawconvertNewlines(infilename, newline1, outfilename, newline2:string) = 
     let 
+    (*infile: input stream, outfile: output stream, size1: size of newline1*)
         val infile = openIn(infilename);
         val outfile = openOut(outfilename);
         val size1 = String.size(newline1)
