@@ -1,20 +1,40 @@
 open TextIO;
-fun convertDelimeters(infilename, delim1, outfilename, delim2) = 
+exception emptyInputFile;
+exception UnevenFields of string;
+fun rawconvertDelimeters(infilename, delim1, outfilename, delim2) = 
     let 
         val infile = openIn(infilename);
-        val outfile = openOut(outfilename)
+        val outfile = openOut(outfilename);
+        val ncol = ref 0;
+        val flag = ref 0;
+        val nline = ref 0;
     in 
+        if (valOf(canInput(infile, 1)) = 0) then raise emptyInputFile
+        else 
         while (valOf(canInput(infile, 1)) = 1) do (
             let 
                 val line = valOf(inputLine(infile));
-                val count = ref 0
+                val count = ref 0;
+                val check = ref 0
+
             in
+                nline := !nline +1;
                 while(!count < String.size(line)) do (
                     let 
                         val c = String.sub(line, !count)
                     in
-                        if(c = delim1) then output(outfile, str(delim2))
-                        else if (c = delim2) then output(outfile, "\\"^str(delim2))
+                        if(c = delim1) then (
+                            if (!flag = 0) then  (
+                                ncol := !ncol + 1;
+                                output(outfile, str(delim2));
+                                check := !check + 1
+                            )
+                            else (
+                                output(outfile, str(delim2));
+                                check := !check + 1
+                            ))
+                        else if (c = delim2) then (
+                            output(outfile, "\\"^str(delim2)))
                         else if (c = #"\\") then
                             (
                             if(String.sub(line, !count+1) = delim1) then 
@@ -28,18 +48,24 @@ fun convertDelimeters(infilename, delim1, outfilename, delim2) =
                         else output(outfile, substring(line, !count, 1));
                         count := !count +1
                     end
-                )
+                );
+                flag := 1;
+                if (!ncol = !check) then (count := !count;
+                                            flushOut(outfile))
+                else raise UnevenFields("Expected: "^Int.toString(!ncol+1)^" fields, Present: "^Int.toString(!check+1)^" fields on Line "^Int.toString(!nline)^"\n")
             end
         );
         closeOut(outfile)
     end
 
-fun convertNewlines(infilename, newline1, outfilename, newline2) = 
+fun rawconvertNewlines(infilename, newline1, outfilename, newline2:string) = 
     let 
         val infile = openIn(infilename);
         val outfile = openOut(outfilename);
         val size1 = String.size(newline1)
     in 
+        if (valOf(canInput(infile, 1)) = 0) then raise emptyInputFile
+        else
         while (valOf(canInput(infile, 1)) = 1) do (
             let 
                 val line = valOf(inputLine(infile));
@@ -62,3 +88,15 @@ fun convertNewlines(infilename, newline1, outfilename, newline2) =
         );
         closeOut(outfile)
     end
+
+fun convertDelimeters(infilename, delim1, outfilename, delim2) = rawconvertDelimeters(infilename, delim1, outfilename, delim2) handle
+    UnevenFields(line) => print(line) |
+    emptyInputFile => print("exception emptyInputFile\n");
+
+fun convertNewlines(infilename, newline1, outfilename, newline2:string) = rawconvertNewlines(infilename, newline1, outfilename, newline2) handle
+      emptyInputFile => print("exception emptyInputFile\n");
+
+fun csv2tsv(infilename, outfilename) = convertDelimeters(infilename, #",", outfilename, #"\t");
+fun tsv2csv(infilename, outfilename) = convertDelimeters(infilename, #"\t", outfilename, #",");
+fun unix2dos(infilename, outfilename) = convertNewlines(infilename, "\n", outfilename, "\r\n");
+fun dos2unix(infilename, outfilename) = convertNewlines(infilename, "\r\n", outfilename, "\n");
