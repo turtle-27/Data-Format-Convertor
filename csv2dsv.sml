@@ -17,37 +17,58 @@ fun rawconvertDelimeters(infilename, delim1, outfilename, delim2) =
                 (*line stores current line, check is the number of delimeters detected, count refer to index of current character of the line.*)
                 val line = valOf(inputLine(infile));
                 val count = ref 0;
-                val check = ref 0
-
+                val check = ref 0;
+                val out = ref ("");
+                val flag1 = ref 0;
+                val del2 = ref 0;
+                val mark = ref 0
             in
                 nline := !nline +1;
                 while(!count < String.size(line)) do (
                     let 
                         val c = String.sub(line, !count)
                     in
-                        if(c = delim1) then (
-                            if (!flag = 0) then  (
-                                ncol := !ncol + 1;
-                                output(outfile, str(delim2));
-                                check := !check + 1
+                        if(c = #"\"") then (
+                            if(!flag1 = 0) then flag1 := 1
+                            else flag1 := 0;
+                            mark := 1;
+                            out := (!out)^str(c)
+                        )
+                        else if(c = delim1) then (
+                             if(!flag1 = 1) then out := (!out)^str(delim1)
+                                else (
+                                    if (!flag = 0) then  (
+                                         ncol := !ncol + 1;
+                                         check := !check + 1
+                                    )
+                                    else (
+                                        check := !check + 1
+                                    );
+                                    if(!del2 = 0) then (
+                                        mark := 0;
+                                        out := !out^(str(delim2));
+                                        output(outfile, (!out))
+                                        )
+                                    else (
+                                        if(!mark = 1) then
+                                            (mark := 0;
+                                            out := !out^(str(delim2));
+                                            output(outfile, !out) 
+                                            )
+                                        else (
+                                            out := "\""^(!out)^"\""^(str(delim2));
+                                            output(outfile, !out)
+                                        );
+                                        del2 := 0   
+                                    );
+                                    flag1 := 0;
+                                    out := ""
+                                )
                             )
-                            else (
-                                output(outfile, str(delim2));
-                                check := !check + 1
-                            ))
                         else if (c = delim2) then (
-                            output(outfile, "\\"^str(delim2)))
-                        else if (c = #"\\") then
-                            (
-                            if(String.sub(line, !count+1) = delim1) then 
-                            (output(outfile, str(delim1));
-                            count := !count+1)
-                            else if (String.sub(line, !count+1) = delim2) then (
-                                output(outfile, "\\\\"^str(delim2));
-                                count := !count + 1 )
-                            else output(outfile, substring(line, !count, 1))
-                            )
-                        else output(outfile, substring(line, !count, 1));
+                            out := (!out)^str(delim2);
+                            del2 := 1)
+                        else out := (!out)^substring(line, !count, 1);
                         count := !count +1
                     end
                 );
