@@ -1,6 +1,6 @@
 open TextIO;
 exception emptyInputFile;
-exception NoFieldAtEndl;
+exception LastFieldFollwedByDelimeter of string;
 exception UnevenFields of string;
 fun rawconvertDelimeters(infilename, delim1, outfilename, delim2) = 
     let 
@@ -37,7 +37,7 @@ fun rawconvertDelimeters(infilename, delim1, outfilename, delim2) =
                         )
                         else if(c = #"\n") then(
                             if(!flag1 = 0) then (
-                                if(String.sub(line, !count-1) = delim1) then raise NoFieldAtEndl
+                                if(String.sub(line, !count-1) = delim1) then raise LastFieldFollwedByDelimeter("Last Field is followed by Delimeter\n")
                                 else(
                                     if (!flag = 0) then  (
                                             ncol := !ncol + 1;
@@ -153,8 +153,8 @@ fun rawconvertNewlines(infilename, newline1, outfilename, newline2:string) =
 
 fun convertDelimeters(infilename, delim1, outfilename, delim2) = rawconvertDelimeters(infilename, delim1, outfilename, delim2) handle
     UnevenFields(line) => print(line) |
-    emptyInputFile => print("exception emptyInputFile\n");
-
+    emptyInputFile => print("exception emptyInputFile\n")
+    | LastFieldFollwedByDelimeter(line) => print(line);
 fun convertNewlines(infilename, newline1, outfilename, newline2:string) = rawconvertNewlines(infilename, newline1, outfilename, newline2) handle
       emptyInputFile => print("exception emptyInputFile\n");
 
