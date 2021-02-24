@@ -1,5 +1,6 @@
 open TextIO;
 exception emptyInputFile;
+exception NoFieldAtEndl;
 exception UnevenFields of string;
 fun rawconvertDelimeters(infilename, delim1, outfilename, delim2) = 
     let 
@@ -9,6 +10,11 @@ fun rawconvertDelimeters(infilename, delim1, outfilename, delim2) =
         val ncol = ref 0;
         val flag = ref 0;
         val nline = ref 0;
+        val check = ref 0;
+        val flag1 = ref 0;
+        val del2 = ref 0;
+        val mark = ref 0;
+        val out = ref ("")
     in 
         if (valOf(canInput(infile, 1)) = 0) then raise emptyInputFile
         else 
@@ -17,13 +23,8 @@ fun rawconvertDelimeters(infilename, delim1, outfilename, delim2) =
                 (*line stores current line, check is the number of delimeters detected, count refer to index of current character of the line.*)
                 val line = valOf(inputLine(infile));
                 val count = ref 0;
-                val check = ref 0;
-                val out = ref ("");
-                val flag1 = ref 0;
-                val del2 = ref 0;
-                val mark = ref 0
+               
             in
-                nline := !nline +1;
                 while(!count < String.size(line)) do (
                     let 
                         val c = String.sub(line, !count)
@@ -33,6 +34,39 @@ fun rawconvertDelimeters(infilename, delim1, outfilename, delim2) =
                             else flag1 := 0;
                             mark := 1;
                             out := (!out)^str(c)
+                        )
+                        else if(c = #"\n") then(
+                            if(!flag1 = 0) then (
+                                if(String.sub(line, !count-1) = delim1) then raise NoFieldAtEndl
+                                else(
+                                    if (!flag = 0) then  (
+                                            ncol := !ncol + 1;
+                                            check := !check + 1
+                                        )
+                                    else (
+                                            check := !check + 1
+                                        );
+                                    if(!del2 = 0) then (
+                                            mark := 0;
+                                            out := !out^(str(c));
+                                            output(outfile, (!out))
+                                            )
+                                    else (
+                                            if(!mark = 1) then
+                                                (mark := 0;
+                                                out := !out^(str(c));
+                                                output(outfile, !out) 
+                                                )
+                                            else (
+                                                out := "\""^(!out)^"\""^(str(c));
+                                                output(outfile, !out)
+                                            );
+                                            del2 := 0   
+                                        );
+                                        out := ""
+                                )
+                            )
+                            else  out := (!out)^substring(line, !count, 1)
                         )
                         else if(c = delim1) then (
                              if(!flag1 = 1) then out := (!out)^str(delim1)
@@ -61,7 +95,6 @@ fun rawconvertDelimeters(infilename, delim1, outfilename, delim2) =
                                         );
                                         del2 := 0   
                                     );
-                                    flag1 := 0;
                                     out := ""
                                 )
                             )
@@ -73,9 +106,14 @@ fun rawconvertDelimeters(infilename, delim1, outfilename, delim2) =
                     end
                 );
                 flag := 1;
-                if (!ncol = !check) then (count := !count;
-                                            flushOut(outfile))
-                else raise UnevenFields("Expected: "^Int.toString(!ncol+1)^" fields, Present: "^Int.toString(!check+1)^" fields on Line "^Int.toString(!nline)^"\n")
+                if (!flag1 = 0) then (
+                    nline := !nline +1;
+                    if (!ncol = !check) then (count := !count;
+                                                flushOut(outfile))
+                    else raise UnevenFields("Expected: "^Int.toString(!ncol)^" fields, Present: "^Int.toString(!check)^" fields on Line "^Int.toString(!nline)^"\n");
+                    check := 0
+                )
+                else flushOut(outfile)
             end
         );
         closeOut(outfile)
