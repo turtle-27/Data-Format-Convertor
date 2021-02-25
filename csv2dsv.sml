@@ -2,6 +2,8 @@ open TextIO;
 exception emptyInputFile;
 exception LastFieldFollwedByDelimeter of string;
 exception UnevenFields of string;
+exception inputFormatIsIncorrect;
+exception notEnclosed;
 fun rawconvertDelimeters(infilename, delim1, outfilename, delim2) = 
     let 
         (*infile takes input file, outfile gives output file, ncol: no. of column in line 1, nline: current line number.*)
@@ -32,8 +34,34 @@ fun rawconvertDelimeters(infilename, delim1, outfilename, delim2) =
                         if(c = #"\"") then (
                             if(!flag1 = 0) then flag1 := 1
                             else flag1 := 0;
-                            mark := 1;
-                            out := (!out)^str(c)
+                            if(!mark = 1) then (
+                                if(!flag1 = 0) then (
+                                    if((String.sub(line, !count+1) = #"\"") orelse (String.sub(line, !count+1) = delim1) orelse (String.sub(line, !count+1) = #"\n")) then out := (!out)^str(c)
+                                    else raise inputFormatIsIncorrect
+                                )
+                                else(
+                                    out := (!out)^str(c)
+                                )
+                            )
+                            else (
+                                if(!out = "") then 
+                                    out := (!out)^str(c)
+                                else raise notEnclosed;
+                                 mark := 1
+                            )    
+                                (* if(String.sub(line, !count+1) = delim1 or String.sub(line, !count+1) = "\n") then 
+                                    (
+                                        if(!flag1 = 0) then out := (!out)^str(c) 
+                                        else raise inputFormatIsIncorrect
+                                    )
+                                else (
+                                    if(!flag1 = 0) then out := (!out)^str(c)
+                                    else (
+                                        if(String.sub(line, !count+1) = #"\"") then out := (!out)^str(c)
+                                        else raise inputFormatIsIncorrect
+                                    )
+                                )          *)
+                            
                         )
                         else if(c = #"\n") then(
                             if(!flag1 = 0) then (
@@ -69,7 +97,10 @@ fun rawconvertDelimeters(infilename, delim1, outfilename, delim2) =
                             else  out := (!out)^substring(line, !count, 1)
                         )
                         else if(c = delim1) then (
-                             if(!flag1 = 1) then out := (!out)^str(delim1)
+                             if(!flag1 = 1) then (
+                                if(!mark = 0) then raise inputFormatIsIncorrect  
+                                else out := (!out)^str(delim1)
+                                )
                                 else (
                                     if (!flag = 0) then  (
                                          ncol := !ncol + 1;
@@ -116,49 +147,16 @@ fun rawconvertDelimeters(infilename, delim1, outfilename, delim2) =
                 else flushOut(outfile)
             end
         );
-        closeOut(outfile)
-    end
-
-fun rawconvertNewlines(infilename, newline1, outfilename, newline2:string) = 
-    let 
-    (*infile: input stream, outfile: output stream, size1: size of newline1*)
-        val infile = openIn(infilename);
-        val outfile = openOut(outfilename);
-        val size1 = String.size(newline1)
-    in 
-        if (valOf(canInput(infile, 1)) = 0) then raise emptyInputFile
-        else
-        while (valOf(canInput(infile, 1)) = 1) do (
-            let 
-                val line = valOf(inputLine(infile));
-                val count = ref 0
-            in
-                while(!count+size1 <= String.size(line)) do (
-                    let 
-                        val c = substring(line, !count, size1)
-                    in
-                        if(c = newline1) then (
-                            output(outfile, newline2);
-                            count := !count + size1)
-                        else (
-                            output(outfile, substring(line, !count, 1));
-                            count := !count + 1
-                            )
-                    end
-                )
-            end
-        );
-        closeOut(outfile)
+        if(!flag1 = 1) then raise inputFormatIsIncorrect
+        else closeOut(outfile)
+        
     end
 
 fun convertDelimeters(infilename, delim1, outfilename, delim2) = rawconvertDelimeters(infilename, delim1, outfilename, delim2) handle
     UnevenFields(line) => print(line) |
     emptyInputFile => print("exception emptyInputFile\n")
-    | LastFieldFollwedByDelimeter(line) => print(line);
-fun convertNewlines(infilename, newline1, outfilename, newline2:string) = rawconvertNewlines(infilename, newline1, outfilename, newline2) handle
-      emptyInputFile => print("exception emptyInputFile\n");
+    | LastFieldFollwedByDelimeter(line) => print(line)
+    | inputFormatIsIncorrect => print("Input Format Is Incorrect\n");
 
 fun csv2tsv(infilename, outfilename) = convertDelimeters(infilename, #",", outfilename, #"\t");
 fun tsv2csv(infilename, outfilename) = convertDelimeters(infilename, #"\t", outfilename, #",");
-fun unix2dos(infilename, outfilename) = convertNewlines(infilename, "\n", outfilename, "\r\n");
-fun dos2unix(infilename, outfilename) = convertNewlines(infilename, "\r\n", outfilename, "\n");
