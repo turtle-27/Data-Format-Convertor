@@ -1,11 +1,18 @@
 open TextIO;
-exception emptyInputFile;
-exception LastFieldFollwedByDelimeter of string;
-exception UnevenFields of string;
-exception inputFormatIsIncorrect;
+exception emptyInputFile; (*Exception raised when input file is empty*)
+exception LastFieldFollwedByDelimeter of string; (*raised when last field of record is followed by delimeter*)
+exception UnevenFields of string; (*When uneven fields are present in the file*)
+exception inputFormatIsIncorrect; (*When input format is not as per specification*)
+(*rawconverDelimeters convert delim1 to delim2*)
 fun rawconvertDelimeters(infilename, delim1, outfilename, delim2) = 
     let 
-        (*infile takes input file, outfile gives output file, ncol: no. of column in line 1, nline: current line number.*)
+       (*infile takes input file, outfile gives output file, ncol: no. of field in line 1, nline: current line number.*)
+       (*flag is to check if current record is first record or not.*)
+       (*check: no. of field in current record *)
+       (*flag1: represents parity of double-quote*)
+       (*del2: It checks if delim2 is in the field or not.*)
+       (*mark: It checks if double-quote is in the field or not*)
+       (*out: It stores current field *)
         val infile = openIn(infilename);
         val outfile = openOut(outfilename);
         val ncol = ref 0;
@@ -31,10 +38,10 @@ fun rawconvertDelimeters(infilename, delim1, outfilename, delim2) =
                         val c = String.sub(line, !count)
                     in
                         if(c = #"\"") then (
-                            if(!flag1 = 0) then flag1 := 1
+                            if(!flag1 = 0) then flag1 := 1  (*changing parity of double-quote*)
                             else flag1 := 0;
-                            if(!mark = 1) then (
-                                if(!flag1 = 0) then (
+                            if(!mark = 1) then (   
+                                if(!flag1 = 0) then (       (*checking the input and raise exception when input is not valid*)
                                     if((String.sub(line, !count+1) = delim1) orelse (String.sub(line, !count+1) = #"\n") orelse (String.sub(line, !count+1) = #"\"") ) then out := (!out)^str(c)
                                     else raise inputFormatIsIncorrect
                                 )
@@ -73,7 +80,7 @@ fun rawconvertDelimeters(infilename, delim1, outfilename, delim2) =
                                                 output(outfile, !out) 
                                                 )
                                             else (
-                                                out := "\""^(!out)^"\""^(str(c));
+                                                out := "\""^(!out)^"\""^(str(c));   (*enclosing field which contains delim2*)
                                                 output(outfile, !out)
                                             );
                                             del2 := 0   
@@ -85,7 +92,7 @@ fun rawconvertDelimeters(infilename, delim1, outfilename, delim2) =
                             )
                             else  out := (!out)^substring(line, !count, 1)
                         )
-                        else if(c = delim1) then (
+                        else if(c = delim1) then (  (*converting delim1 to delim2 when delim1 is not inside field*)
                              if(!flag1 = 1) then (
                                 if(!mark = 0) then raise inputFormatIsIncorrect  
                                 else out := (!out)^str(delim1)
@@ -110,7 +117,7 @@ fun rawconvertDelimeters(infilename, delim1, outfilename, delim2) =
                                             output(outfile, !out) 
                                             )
                                         else (
-                                            out := "\""^(!out)^"\""^(str(delim2));
+                                            out := "\""^(!out)^"\""^(str(delim2));   (*enclosing field which contains double-quotes*)
                                             output(outfile, !out)
                                         );
                                         del2 := 0   
@@ -118,7 +125,7 @@ fun rawconvertDelimeters(infilename, delim1, outfilename, delim2) =
                                     out := ""
                                 )
                             )
-                        else if (c = delim2) then (
+                        else if (c = delim2) then (   
                             out := (!out)^str(delim2);
                             del2 := 1)
                         else out := (!out)^substring(line, !count, 1);
@@ -126,7 +133,7 @@ fun rawconvertDelimeters(infilename, delim1, outfilename, delim2) =
                     end
                 );
                 
-                if (!flag1 = 0) then (
+                if (!flag1 = 0) then (   (*checking for uneven field*)
                     nline := !nline +1;
                     if (!ncol = !check) then (count := !count;
                                                 flushOut(outfile))
