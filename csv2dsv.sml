@@ -3,7 +3,6 @@ exception emptyInputFile;
 exception LastFieldFollwedByDelimeter of string;
 exception UnevenFields of string;
 exception inputFormatIsIncorrect;
-exception notEnclosed;
 fun rawconvertDelimeters(infilename, delim1, outfilename, delim2) = 
     let 
         (*infile takes input file, outfile gives output file, ncol: no. of column in line 1, nline: current line number.*)
@@ -36,7 +35,7 @@ fun rawconvertDelimeters(infilename, delim1, outfilename, delim2) =
                             else flag1 := 0;
                             if(!mark = 1) then (
                                 if(!flag1 = 0) then (
-                                    if((String.sub(line, !count+1) = #"\"") orelse (String.sub(line, !count+1) = delim1) orelse (String.sub(line, !count+1) = #"\n")) then out := (!out)^str(c)
+                                    if((String.sub(line, !count+1) = delim1) orelse (String.sub(line, !count+1) = #"\n") orelse (String.sub(line, !count+1) = #"\"") ) then out := (!out)^str(c)
                                     else raise inputFormatIsIncorrect
                                 )
                                 else(
@@ -46,21 +45,9 @@ fun rawconvertDelimeters(infilename, delim1, outfilename, delim2) =
                             else (
                                 if(!out = "") then 
                                     out := (!out)^str(c)
-                                else raise notEnclosed;
+                                else raise inputFormatIsIncorrect;
                                  mark := 1
                             )    
-                                (* if(String.sub(line, !count+1) = delim1 or String.sub(line, !count+1) = "\n") then 
-                                    (
-                                        if(!flag1 = 0) then out := (!out)^str(c) 
-                                        else raise inputFormatIsIncorrect
-                                    )
-                                else (
-                                    if(!flag1 = 0) then out := (!out)^str(c)
-                                    else (
-                                        if(String.sub(line, !count+1) = #"\"") then out := (!out)^str(c)
-                                        else raise inputFormatIsIncorrect
-                                    )
-                                )          *)
                             
                         )
                         else if(c = #"\n") then(
@@ -91,7 +78,9 @@ fun rawconvertDelimeters(infilename, delim1, outfilename, delim2) =
                                             );
                                             del2 := 0   
                                         );
-                                        out := ""
+                                        out := "";
+                                        flag := 1
+
                                 )
                             )
                             else  out := (!out)^substring(line, !count, 1)
@@ -136,7 +125,7 @@ fun rawconvertDelimeters(infilename, delim1, outfilename, delim2) =
                         count := !count +1
                     end
                 );
-                flag := 1;
+                
                 if (!flag1 = 0) then (
                     nline := !nline +1;
                     if (!ncol = !check) then (count := !count;
@@ -154,9 +143,9 @@ fun rawconvertDelimeters(infilename, delim1, outfilename, delim2) =
 
 fun convertDelimeters(infilename, delim1, outfilename, delim2) = rawconvertDelimeters(infilename, delim1, outfilename, delim2) handle
     UnevenFields(line) => print(line) |
-    emptyInputFile => print("exception emptyInputFile\n")
+    emptyInputFile => print("Exception: emptyInputFile\n")
     | LastFieldFollwedByDelimeter(line) => print(line)
-    | inputFormatIsIncorrect => print("Input Format Is Incorrect\n");
+    | inputFormatIsIncorrect => print("Exception: Input format is incorrect.\n");
 
 fun csv2tsv(infilename, outfilename) = convertDelimeters(infilename, #",", outfilename, #"\t");
 fun tsv2csv(infilename, outfilename) = convertDelimeters(infilename, #"\t", outfilename, #",");
