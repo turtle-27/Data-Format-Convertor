@@ -145,7 +145,7 @@ fun convertDelimeters(infilename, delim1, outfilename, delim2) = rawconvertDelim
     UnevenFields(line) => print(line) |
     emptyInputFile => print("Exception: emptyInputFile\n")
     | LastFieldFollwedByDelimeter(line) => print(line)
-    | inputFormatIsIncorrect => print("Exception: Input format is incorrect.\n");
+    | inputFormatIsIncorrect => print("Exception: Input format is incorrect\n");
 
 fun csv2tsv(infilename, outfilename) = convertDelimeters(infilename, #",", outfilename, #"\t");
 fun tsv2csv(infilename, outfilename) = convertDelimeters(infilename, #"\t", outfilename, #",");
